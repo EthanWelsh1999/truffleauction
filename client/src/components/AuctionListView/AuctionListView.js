@@ -1,8 +1,8 @@
 import React, { Component } from 'react'
 import './AuctionListView.css'
 
-import AuctionFactory from 'contracts/AuctionFactory.sol'
-import Auction from 'contracts/Auction.sol'
+import AuctionFactory from 'contracts/AuctionMaker.sol'
+import Auction from 'contracts/SimpleAuction.sol'
 
 class AuctionListView extends Component
 {
@@ -27,10 +27,10 @@ class AuctionListView extends Component
         this.onLogBid = this.onLogBid.bind(this)
     }
 
-    _inputReserve = null
-    _inputBidIncrement = null
-    _inputStartBlock = null
-    _inputEndBlock = null
+    _inputTTP = null
+    _inputBiddingTime = null
+    //_inputStartBlock = null
+    //_inputEndBlock = null
     _inputBidAmount = null
 
     componentDidMount() {
@@ -84,11 +84,11 @@ class AuctionListView extends Component
 
     onClickCreateAuction() {
         AuctionFactory.deployed().createAuction(
-            this._inputReserve.value,
-            this._inputBidIncrement.value,
-            this._inputStartBlock.value,
-            this._inputEndBlock.value,
-            { from: this.state.currentAccount, gas: 4000000 })
+            this._inputBiddingTime.value,
+            this._inputTTP.value)
+            //this._inputStartBlock.value,
+            //this._inputEndBlock.value,
+            //{ from: this.state.currentAccount, gas: 4000000 })
     }
 
     onLogBid(err, resp) {
@@ -101,7 +101,7 @@ class AuctionListView extends Component
 
     getAllAuctions() {
         return new Promise((resolve, reject) => {
-            return AuctionFactory.deployed().allAuctions.call().then(result => {
+            return AuctionFactory.deployed().getAuction.call().then(result => {
                 return Promise.all( result.map(auctionAddr => this.getAuction(auctionAddr)) )
             }).then(auctions => {
 
@@ -119,28 +119,30 @@ class AuctionListView extends Component
 
     getAuction(auctionAddr) {
         const auction = Auction.at(auctionAddr)
-        const owner = auction.owner.call()
-        const startBlock = auction.startBlock.call()
-        const endBlock = auction.endBlock.call()
-        const bidIncrement = auction.bidIncrement.call()
+        const beneficiary = auction.beneficiary.call()
+        const endTime = auction.auctionEndTime.call()
+        //const endBlock = auction.endBlock.call()
+        //const bidIncrement = auction.bidIncrement.call()
         const highestBid = auction.getHighestBid.call()
-        const highestBindingBid = auction.highestBindingBid.call()
+        //const highestBindingBid = auction.highestBindingBid.call()
         const highestBidder = auction.highestBidder.call()
-        const canceled = auction.canceled.call()
+        const canceled = auction.cancelled.call()
+        const ended = auction.ended.call()
 
-        return Promise.all([ owner, startBlock, endBlock, bidIncrement, highestBid, highestBindingBid, highestBidder, canceled ]).then(vals => {
-            const [ owner, startBlock, endBlock, bidIncrement, highestBid, highestBindingBid, highestBidder, canceled ] = vals
+        return Promise.all([ beneficiary, endTime, highestBid, highestBidder, canceled, ended ]).then(vals => {
+            const [ beneficiary, endTime, highestBid, highestBidder, canceled, ended ] = vals
             return {
                 contract: auction,
                 address: auctionAddr,
-                owner: owner,
-                startBlock: startBlock.toString(),
-                endBlock: endBlock.toString(),
-                bidIncrement: this.props.web3.fromWei(bidIncrement, 'ether').toString(),
+                beneficiary: beneficiary,
+                endTime: endTime.toString(),
+                //endBlock: endBlock.toString(),
+                //bidIncrement: this.props.web3.fromWei(bidIncrement, 'ether').toString(),
                 highestBid: this.props.web3.fromWei(highestBid, 'ether').toString(),
-                highestBindingBid: this.props.web3.fromWei(highestBindingBid, 'ether').toString(),
+                //highestBindingBid: this.props.web3.fromWei(highestBindingBid, 'ether').toString(),
                 highestBidder: highestBidder,
                 canceled: canceled,
+                ended: ended
             }
         })
     }
@@ -152,7 +154,7 @@ class AuctionListView extends Component
     }
 
     onClickBid(auction) {
-        auction.contract.placeBid({ from: this.state.currentAccount, value: this.props.web3.toWei(this._inputBidAmount.value, 'ether') }).then(_ => {
+        auction.contract.bid({ from: this.state.currentAccount, value: this.props.web3.toWei(this._inputBidAmount.value, 'ether') }).then(_ => {
             this.getAllAuctions()
         })
     }
@@ -163,22 +165,16 @@ class AuctionListView extends Component
                 <h1>Auctions</h1>
 
                 <div>
-                    Current block: {this.props.web3.eth.blockNumber}
+                    Current time: {this.props.web3.eth.blockNumber.timestamp}
                 </div>
 
                 <div className="form-create-auction">
                     <h2>Create auction</h2>
                     <div>
-                        Reserve <input type="text" ref={x => this._inputReserve = x} defaultValue={0} />
+                        TTP <input type="text" ref={x => this._inputTTP = x} defaultValue={0} />
                     </div>
                     <div>
-                        Bid increment <input type="text" ref={x => this._inputBidIncrement = x} defaultValue={100000000000000000} />
-                    </div>
-                    <div>
-                        Start block <input type="text" ref={x => this._inputStartBlock = x} defaultValue={0} />
-                    </div>
-                    <div>
-                        End block <input type="text" ref={x => this._inputEndBlock = x} defaultValue={10} />
+                        Bidding Time <input type="text" ref={x => this._inputBiddingTime = x} defaultValue={0} />
                     </div>
                     <button onClick={this.onClickCreateAuction}>Create Auction</button>
                 </div>
@@ -187,11 +183,9 @@ class AuctionListView extends Component
                     <thead>
                         <tr>
                             <td>Address</td>
-                            <td>Start block</td>
-                            <td>End block</td>
-                            <td>Bid increment</td>
+                            <td>Beneficiary</td>
+                            <td>End Time</td>
                             <td>Highest bid</td>
-                            <td>Highest binding bid</td>
                             <td>Highest bidder</td>
                             <td>Your bid</td>
                             <td>Status</td>
@@ -203,19 +197,17 @@ class AuctionListView extends Component
                         let status = 'Running'
                         if (auction.canceled) {
                             status = 'Canceled'
-                        } else if (this.props.web3.eth.blockNumber > auction.endBlock) {
+                        } else if (this.props.web3.eth.blockNumber.timestamp > auction.endTime) {
                             status = 'Ended'
-                        } else if (this.props.web3.eth.blockNumber < auction.startBlock) {
-                            status = 'Unstarted'
+                        } else if (this.props.web3.eth.blockNumber.timestamp > auction.endTime) {
+                            status = 'Not Signed'
                         }
                         return (
                             <tr key={auction.address}>
                                 <td>{auction.address.substr(0, 6)}</td>
-                                <td>{auction.startBlock}</td>
-                                <td>{auction.endBlock}</td>
-                                <td>{auction.bidIncrement} ETH</td>
+                                <td>{auction.beneficiary.substr(0, 6)}</td>
+                                <td>{auction.endTime}</td>
                                 <td>{auction.highestBid} ETH</td>
-                                <td>{auction.highestBindingBid} ETH</td>
                                 <td>{auction.highestBidder.substr(0, 6)}</td>
                                 <td>{this.state.currentAccountBids[auction.address]}</td>
                                 <td>{status}</td>

@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import './AuctionView.css'
 
 // import Web3 from 'web3'
-import Auction from 'contracts/Auction.sol'
+import Auction from 'contracts/SimpleAuction.sol'
 
 class AuctionView extends Component
 {
@@ -48,7 +48,7 @@ class AuctionView extends Component
     onClickBid() {
         const bidAmount = this._inputBidAmount.value
 
-        Auction.deployed().placeBid({ from: this.state.sender, value: bidAmount, gas: 2000000 }).then(result => {
+        Auction.deployed().bid({ from: this.state.sender, value: bidAmount, gas: 2000000 }).then(result => {
             console.log('bid result = ', result)
         })
     }

@@ -5,9 +5,7 @@ import Web3 from 'web3'
 
 import './index.css'
 
-import truffleConfig from '../truffle.js'
-
-var web3Location = `http://${truffleConfig.rpc.host}:${truffleConfig.rpc.port}`
+var web3Location = `http://localhost:8545`
 
 window.addEventListener('load', function() {                    
   var web3Provided;
