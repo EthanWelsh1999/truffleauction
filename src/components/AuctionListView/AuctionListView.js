@@ -1,8 +1,8 @@
 import React, { Component } from 'react'
 import './AuctionListView.css'
 
-import AuctionFactory from '/contracts/AuctionMaker.sol'
-import Auction from '/contracts/SimpleAuction.sol'
+import AuctionFactory from '../../../contracts/AuctionMaker.sol'
+import Auction from '../../../contracts/SimpleAuction.sol'
 
 class AuctionListView extends Component
 {
