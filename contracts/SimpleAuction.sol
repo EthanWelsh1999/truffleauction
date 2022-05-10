@@ -128,7 +128,10 @@ contract SimpleAuction {
             // before `send` returns.
             pendingReturns[msg.sender] = 0;
 
-            if (!payable(msg.sender).send(amount)) {
+            // cast to payable
+            address payable caller = msg.sender;
+
+            if (!caller.send(amount)) {
                 // No need to call throw here, just reset the amount owing
                 pendingReturns[msg.sender] = amount;
                 return false;

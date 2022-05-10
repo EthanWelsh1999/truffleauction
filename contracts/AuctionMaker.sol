@@ -16,11 +16,12 @@ contract AuctionMaker {
 
     // Function to create a new auction with the assigned bidding time
     function createAuction(uint biddingTime, address ttp) public {
-        SimpleAuction auction = new SimpleAuction(biddingTime, payable(msg.sender), ttp);
+        address payable beneficiary = msg.sender;
+        SimpleAuction auction = new SimpleAuction(biddingTime, beneficiary, ttp);
 
-        auctions.push(auction);
+        auctions.push(address(auction));
 
-        emit AuctionCreated(auction, msg.sender, ttp, biddingTime);
+        emit AuctionCreated(address(auction), msg.sender, ttp, biddingTime);
     }
 
     // Function to get the list of auctions
