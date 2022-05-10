@@ -2,10 +2,19 @@
 // It is suitable for the purpose of this website
 
 // The modifications I have made primarily concern the transfer of physical goods, which this auction site is designed for.
-// Before the auction ends and money is transferred, the beneficiary must confirm that they have sent the requested good and the highest bidder must confirm they have received it.
+// The contract requires a trusted third-party to verify that the parties involved are behaving correctly.
+
+// The beneficiary signs the auction when they have sent the good.
+// The winner signs the auction when they confirm they have received the good.
+// The TTP signs when they confirm that the beneficiary has sent the good.
+
+// Money will only be transferred once 2/3 of the involved parties and the TTP have signed the auction.
+// Assuming no foul play, the TTP will not need to even get involved.
+// The TTP is chosen by the beneficiary of the auction.
+// The contract also assumes that the TTP will act fairly between the two parties. In the site's front-end, when placing a bid you will ask to confirm that you trust the TPP.
 
 // The auction can now also be cancelled, resulting in no transfer of money.
-// The beneficiary can cancel up until the point they confirm they have sent the good.
+// The beneficiary can cancel up until the point someone signs the auction.
 
 // Sections I have modified will be denoted by ***MODIFIED HERE***
 
@@ -22,6 +31,10 @@ contract SimpleAuction {
     address public highestBidder;
     uint public highestBid;
 
+    // ***MODIFIED HERE***
+    // Address of the TTP, used to verify the auction.
+    address public ttp;
+
     // Allowed withdrawals of previous bids
     mapping(address => uint) pendingReturns;
 
@@ -30,20 +43,17 @@ contract SimpleAuction {
     bool ended;
 
     // ***MODIFIED HERE***
-    // This variable is to confirm the beneficiary has sent the good they are selling
-    bool goodSent;
-
-    // This variable is set to true when the winner of the auction confirms that they have received the good they have paid for
-    bool goodReceived;
+    // This map will contain all of the parties who have verified the transaction. 2/3 are needed to end the auction
+    mapping(address => bool) signed;
+    // Counts the number of signatures.
+    uint sigCount;
 
     // This variable is set to true when the auction is cancelled
     bool cancelled;
     // This event fires when the auction is cancelled
     event AuctionCancelled();
-    // This event fires when the auction is over and the good has been confirmed sent.
+    // This event fires when the auction is over.
     event AuctionEnded();
-    // This event fires when the good is confirmed received
-    event GoodReceived();
 
     // Events that will be emitted on changes.
     event HighestBidIncreased(address bidder, uint amount);
@@ -59,10 +69,12 @@ contract SimpleAuction {
     /// beneficiary address `_beneficiary`.
     constructor(
         uint _biddingTime,
-        address payable _beneficiary
+        address payable _beneficiary,
+        address _ttp
     ) public {
         beneficiary = _beneficiary;
         auctionEndTime = block.timestamp + _biddingTime;
+        ttp = _ttp;
     }
 
     /// Bid on the auction with the value sent
@@ -126,70 +138,34 @@ contract SimpleAuction {
     }
 
     // ***MODIFIED HERE***
-    // Once the auction time has run out, the beneficiary can call this to confirm they have sent the good. Money is transferred here.
-    function sendGood() public {
-        require(msg.sender == beneficiary, "Only the beneficiary can call this function.");
+    // Once the auction time has run out, the involved parties need to sign off on the auction. Once 2/3 have signed it, then the auction can end and money can be transferred.
+    function sign() public {
+        require(msg.sender == beneficiary || msg.sender == highestBidder || msg.sender == ttp, "Only the involved parties can call this function.");
         require(!cancelled, "Auction has already been cancelled.");
-
-        require(block.timestamp >= auctionEndTime, "Auction is still ongoing.");
-        require(!goodSent, "sendGood has already been called.");
+        require(block.timestamp >= auctionEndTime, "Cannot sign before auction is over");
+        require(signed[msg.sender] != true, "Cannot sign more than once.");
 
         // 2. Effects
-        goodSent = true;
+        signed[msg.sender] = true;
+        sigCount++;
         emit AuctionWon(highestBidder, highestBid);
 
-        // 3. Interaction
-        beneficiary.transfer(highestBid);
+        // Once there have been 2/3 signatures, end the auction and transfer the money
+        if (sigCount >= 2) {
+            emit AuctionEnded();
+            ended = true;
+            beneficiary.transfer(highestBid);
+        }
+        
     }
 
-    // Function called by the winner when they have received the good.
-    function receiveGood() public {
-        require(msg.sender == highestBidder, "Only the winner of the auction can call this.");
-        require(goodSent, "Good has not been confirmed sent yet");
-        require(!goodReceived, "goodReceived has already been called.");
-        require(!cancelled, "Auction has already been cancelled.");
 
-        goodReceived = true;
-        emit GoodReceived();
-
-    }
-
-    /// End the auction and send the highest bid
-    /// to the beneficiary.
-    function auctionEnd() public {
-        // It is a good guideline to structure functions that interact
-        // with other contracts (i.e. they call functions or send Ether)
-        // into three phases:
-        // 1. checking conditions
-        // 2. performing actions (potentially changing conditions)
-        // 3. interacting with other contracts
-        // If these phases are mixed up, the other contract could call
-        // back into the current contract and modify the state or cause
-        // effects (ether payout) to be performed multiple times.
-        // If functions called internally include interaction with external
-        // contracts, they also have to be considered interaction with
-        // external contracts.
-
-        // 1. Conditions
-
-        // ***MODIFIED HERE***
-        // Added conditions so that the auction only ends when reception of good is confirmed, and that the auction is not cancelled.
-        require(goodReceived, "The highest bidder has not yet confirmed the reception of their good.");
-        require(!cancelled, "Auction has already been cancelled.");
-
-        require(block.timestamp >= auctionEndTime, "Auction not yet ended.");
-        require(!ended, "auctionEnd has already been called.");
-
-        // 2. Effects
-        ended = true;
-        emit AuctionEnded();
-
-    }
-
-    // This function will cancel the auction before the money has been transferred and the good has been sent.
+    // This function will cancel the auction before anyone has signed it.
     function cancelAuction() public {
         require(msg.sender == beneficiary, "Only the beneficiary can call this function.");
-        require(!goodSent, "sendGood has already been called.");
+        require(signed[beneficiary] != true, "Auction has already been signed");
+        require(signed[highestBidder] != true, "Auction has already been signed");
+        require(signed[ttp] != true, "Auction has already been signed");
         require(!cancelled, "Auction has already been cancelled.");
 
         cancelled = true;

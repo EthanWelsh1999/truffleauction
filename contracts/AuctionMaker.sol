@@ -9,22 +9,22 @@ import { SimpleAuction } from './SimpleAuction.sol';
 contract AuctionMaker {
 
     // The list of created auctions
-    SimpleAuction[] public auctions;
+    address[] public auctions;
 
     // Event that fires when an auction is created
-    event AuctionCreated(SimpleAuction auction, address beneficiary, uint biddingTime);
+    event AuctionCreated(address auction, address beneficiary, address ttp, uint biddingTime);
 
     // Function to create a new auction with the assigned bidding time
-    function createAuction(uint biddingTime) public {
-        SimpleAuction auction = new SimpleAuction(biddingTime, payable(msg.sender));
+    function createAuction(uint biddingTime, address ttp) public {
+        SimpleAuction auction = new SimpleAuction(biddingTime, payable(msg.sender), ttp);
 
         auctions.push(auction);
 
-        emit AuctionCreated(auction, msg.sender, biddingTime);
+        emit AuctionCreated(auction, msg.sender, ttp, biddingTime);
     }
 
     // Function to get the list of auctions
-    function getAuction() public view returns (SimpleAuction[] memory) {
+    function getAuction() public view returns (address[] memory) {
         return auctions;
     }
 
