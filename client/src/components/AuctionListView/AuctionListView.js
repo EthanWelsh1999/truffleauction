@@ -164,6 +164,7 @@ class AuctionListView extends Component
             <div>
                 <h1>Auctions</h1>
 
+                
                 <div>
                     Current time: {this.props.web3.eth.blockNumber.timestamp}
                 </div>
@@ -212,7 +213,7 @@ class AuctionListView extends Component
                                 <td>{this.state.currentAccountBids[auction.address]}</td>
                                 <td>{status}</td>
                                 <td>
-                                    {auction.owner == this.state.currentAccount && (status === 'Running' || status === 'Unstarted') &&
+                                    {auction.owner === this.state.currentAccount && (status === 'Running' || status === 'Unstarted') &&
                                         <button onClick={() => this.cancelAuction(auction)}>Cancel</button>
                                     }
                                     <div>

@@ -5,7 +5,7 @@ import Web3 from 'web3'
 
 import './index.css'
 
-var web3Location = `http://localhost:8545`
+var web3Location = `http://127.0.0.1:7545`
 
 window.addEventListener('load', function() {                    
   var web3Provided;
