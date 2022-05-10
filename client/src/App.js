@@ -2,8 +2,8 @@ import React, { Component } from 'react'
 import './App.css'
 
 // import AccountListContainer from 'components/AccountList/AccountListContainer'
-//import AuctionView from 'components/AuctionView/AuctionView'
-import AuctionListView from './components/AuctionListView/AuctionListView.js'
+import AuctionView from 'components/AuctionView/AuctionView'
+import AuctionListView from 'components/AuctionListView/AuctionListView'
 
 class App extends Component
 {
