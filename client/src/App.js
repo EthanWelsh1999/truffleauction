@@ -1,11 +1,11 @@
 import React, { Component } from "react";
-import SimpleStorageContract from "./contracts/SimpleStorage.json";
+import AuctionContract from "./contracts/SimpleAuction.json";
 import getWeb3 from "./getWeb3";
 
 import "./App.css";
 
 class App extends Component {
-  state = { storageValue: 0, web3: null, accounts: null, contract: null };
+  state = { web3: null, accounts: null, auctions: null, currentAccount: null };
 
   componentDidMount = async () => {
     try {
@@ -15,17 +15,8 @@ class App extends Component {
       // Use web3 to get the user's accounts.
       const accounts = await web3.eth.getAccounts();
 
-      // Get the contract instance.
-      const networkId = await web3.eth.net.getId();
-      const deployedNetwork = SimpleStorageContract.networks[networkId];
-      const instance = new web3.eth.Contract(
-        SimpleStorageContract.abi,
-        deployedNetwork && deployedNetwork.address,
-      );
-
-      // Set web3, accounts, and contract to the state, and then proceed with an
-      // example of interacting with the contract's methods.
-      this.setState({ web3, accounts, contract: instance }, this.runExample);
+      // Set web3 and accounts to the state, and call example
+      this.setState({ web3, accounts, currentAccount: accounts[0] }, this.createAuction(120, accounts[1]));
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -35,6 +26,40 @@ class App extends Component {
     }
   };
 
+  // Function to start a new auction
+  createAuction = async(biddingTime, ttp) => {
+
+    // Create new contract instance.
+    const networkId = await web3.eth.net.getId();
+    const deployedNetwork = AuctionContract.networks[networkId];
+    const instance = new web3.eth.Contract(
+      AuctionContract.abi,
+      deployedNetwork && deployedNetwork.address, {from: currentAccount, data: biddingTime, ttp}
+    );
+
+    // Create a copy of the state add the new auction.
+    const stateCopy = [...this.state.auctions];
+    stateCopy.push(instance);
+
+    // Modify the state
+    this.setState({auctions: stateCopy});
+  }
+
+  getAuctions = async() => {
+    const auctions = this.state.auctions;
+    let data = [];
+
+    for (const auction in auctions) {
+      const address  = await auction.options.address;
+      const beneficiary  = await auction.methods.beneficiary().call();
+      const ttp = await auction.methods.ttp.call();
+      data.push({address, beneficiary});
+    }
+
+    return data;
+  }
+
+  /*
   runExample = async () => {
     const { accounts, contract } = this.state;
 
@@ -46,11 +71,11 @@ class App extends Component {
 
     // Update state with the result.
     this.setState({ storageValue: response });
-  };
+  }; */
 
   render() {
     if (!this.state.web3) {
-      return <div>Loading Web3, accounts, and contract...</div>;
+      return <div>Loading Web3, accounts, and contracts...</div>;
     }
     return (
       <div className="App">
@@ -64,7 +89,29 @@ class App extends Component {
         <p>
           Try changing the value stored on <strong>line 42</strong> of App.js.
         </p>
-        <div>The stored value is: {this.state.storageValue}</div>
+        
+        <div>
+          <table>
+            <thead>
+              <tr>
+                <td>Address</td>
+                <td>Beneficiary Address</td>
+                <td>TTP Address</td>
+              </tr>
+            </thead>
+            <tbody>
+              {this.getAuctions().map(auction => {
+                return (
+                  <tr key={auction.address}>
+                    <td>{auction.address}</td>
+                    <td>{auction.beneficiary}</td>
+                    <td>{auction.ttp}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
