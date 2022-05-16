@@ -50,6 +50,7 @@ class App extends Component {
 
   }
 
+  // Updates the data concerning the current auctions
   getAuctions = async () => {
 
     const instance = this.state.auctionMakerInstance;
@@ -61,18 +62,24 @@ class App extends Component {
     //console.log(addresses);
 
     for (const address of addresses) {
-      try {
-        const auction = new web3.eth.Contract(
-          AuctionContract.abi,
-          String(address)
-        );
 
-        const beneficiary = await auction.methods.beneficiary().call();
-        const ttp = await auction.methods.ttp().call();
+      const auction = new web3.eth.Contract(
+        AuctionContract.abi,
+        String(address)
+      );
 
-        data.push({ address, beneficiary, ttp });
-      } catch (error) {
-      }
+      const beneficiary = await auction.methods.beneficiary().call();
+      const ttp = await auction.methods.ttp().call();
+      const highestBidder = await auction.methods.highestBidder().call();
+      const highestBid = await auction.methods.highestBid().call();
+      const endTime = await auction.methods.auctionEndTime().call();
+      const block = await web3.eth.getBlock("latest");
+      const timestamp = block.timestamp;
+      console.log(timestamp);
+      const timeRemaining = endTime - timestamp;
+
+      data.push({ address, beneficiary, ttp, highestBid, highestBidder, endTime, timeRemaining });
+
     }
 
     this.setState({ auctionData: data });
@@ -91,7 +98,9 @@ class App extends Component {
 
     return (
       <div className="App">
-        
+
+
+
         <div className="form-create-auction">
           <h2>Create Auction</h2>
           <div>
@@ -110,6 +119,10 @@ class App extends Component {
                 <td>Address</td>
                 <td>Beneficiary Address</td>
                 <td>TTP Address</td>
+                <td>Highest Bid</td>
+                <td>Highest Bidder Address</td>
+                <td>End Time</td>
+                <td>Time Remaining</td>
               </tr>
             </thead>
             <tbody>
@@ -119,6 +132,10 @@ class App extends Component {
                     <td>{auction.address.substr(0, 10)}</td>
                     <td>{auction.beneficiary.substr(0, 10)}</td>
                     <td>{auction.ttp}</td>
+                    <td>{auction.highestBid}</td>
+                    <td>{auction.highestBidder.substr(0, 10)}</td>
+                    <td>{auction.endTime}</td>
+                    <td>{auction.timeRemaining}</td>
                   </tr>
                 )
               })}
