@@ -1,22 +1,35 @@
 import React, { Component } from "react";
 import AuctionContract from "./contracts/SimpleAuction.json";
+import AuctionMakerContract from "./contracts/AuctionMaker.json";
 import getWeb3 from "./getWeb3";
 
 import "./App.css";
 
 class App extends Component {
-  state = { web3: null, accounts: null, auctions: null, currentAccount: null };
+  state = { web3: null, accounts: null, auctionMakerInstance: null, auctionData: [] };
 
   componentDidMount = async () => {
     try {
       // Get network provider and web3 instance.
       const web3 = await getWeb3();
 
+      console.log(web3.givenProvider);
+
       // Use web3 to get the user's accounts.
       const accounts = await web3.eth.getAccounts();
+      //console.log(accounts);
+
+      const networkId = await web3.eth.net.getId();
+      const deployedNetwork = AuctionMakerContract.networks[networkId];
+      const instance = new web3.eth.Contract(
+        AuctionMakerContract.abi,
+        "0x092d26fda83e4071ce2C7918241127856213df5a"
+      );
+
+      console.log(instance);
 
       // Set web3 and accounts to the state, and call example
-      this.setState({ web3, accounts, currentAccount: accounts[0] }, this.createAuction(120, accounts[1]));
+      this.setState({ web3, accounts, auctionMakerInstance: instance });
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -27,56 +40,55 @@ class App extends Component {
   };
 
   // Function to start a new auction
-  createAuction = async(biddingTime, ttp) => {
+  newAuction = async (biddingTime, ttp) => {
 
-    // Create new contract instance.
-    const networkId = await web3.eth.net.getId();
-    const deployedNetwork = AuctionContract.networks[networkId];
-    const instance = new web3.eth.Contract(
-      AuctionContract.abi,
-      deployedNetwork && deployedNetwork.address, {from: currentAccount, data: biddingTime, ttp}
-    );
+    const instance = this.state.auctionMakerInstance;
+    const accounts = this.state.accounts;
 
-    // Create a copy of the state add the new auction.
-    const stateCopy = [...this.state.auctions];
-    stateCopy.push(instance);
+    await instance.methods.createAuction(biddingTime, ttp).send({ from: accounts[0] });
+    await this.getAuctions();
 
-    // Modify the state
-    this.setState({auctions: stateCopy});
   }
 
-  getAuctions = async() => {
-    const auctions = this.state.auctions;
-    let data = [];
+  getAuctions = async () => {
 
-    for (const auction in auctions) {
-      const address  = await auction.options.address;
-      const beneficiary  = await auction.methods.beneficiary().call();
-      const ttp = await auction.methods.ttp.call();
-      data.push({address, beneficiary});
+    const instance = this.state.auctionMakerInstance;
+    const web3 = this.state.web3;
+    let data = []
+    let addresses = [];
+
+    addresses = await instance.methods.getAuction().call();
+    //console.log(addresses);
+
+    for (const address of addresses) {
+      try {
+        const auction = new web3.eth.Contract(
+          AuctionContract.abi,
+          String(address)
+        );
+
+        const beneficiary = await auction.methods.beneficiary().call();
+        const ttp = await auction.methods.ttp().call();
+
+        data.push({ address, beneficiary, ttp });
+      } catch (error) {
+      }
     }
 
-    return data;
-  }
+    this.setState({ auctionData: data });
 
-  /*
-  runExample = async () => {
-    const { accounts, contract } = this.state;
-
-    // Stores a given value, 5 by default.
-    await contract.methods.set(5).send({ from: accounts[0] });
-
-    // Get the value from the contract to prove it worked.
-    const response = await contract.methods.get().call();
-
-    // Update state with the result.
-    this.setState({ storageValue: response });
-  }; */
+  };
 
   render() {
     if (!this.state.web3) {
       return <div>Loading Web3, accounts, and contracts...</div>;
     }
+
+    this.getAuctions();
+
+    const auctions = this.state.auctionData;
+    //console.log(auctions);
+
     return (
       <div className="App">
         <h1>Good to Go!</h1>
@@ -89,7 +101,7 @@ class App extends Component {
         <p>
           Try changing the value stored on <strong>line 42</strong> of App.js.
         </p>
-        
+
         <div>
           <table>
             <thead>
@@ -100,7 +112,7 @@ class App extends Component {
               </tr>
             </thead>
             <tbody>
-              {this.getAuctions().map(auction => {
+              {auctions.map(auction => {
                 return (
                   <tr key={auction.address}>
                     <td>{auction.address}</td>

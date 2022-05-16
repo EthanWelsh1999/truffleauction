@@ -69,10 +69,11 @@ contract SimpleAuction {
     /// beneficiary address `_beneficiary`.
     constructor(
         uint _biddingTime,
-        address _ttp
+        address _ttp,
+        address payable _beneficiary
     ) public {
-        beneficiary = msg.sender;
-        auctionEndTime = block.timestamp + _biddingTime seconds;
+        beneficiary = _beneficiary;
+        auctionEndTime = block.timestamp + _biddingTime;
         ttp = _ttp;
     }
 
