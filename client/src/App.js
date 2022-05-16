@@ -6,7 +6,10 @@ import getWeb3 from "./getWeb3";
 import "./App.css";
 
 class App extends Component {
-  state = { web3: null, accounts: null, auctionMakerInstance: null, auctionData: [] };
+  state = { web3: null, accounts: null, auctionMakerInstance: null, auctionData: [], timestamp: null };
+
+  _inputBiddingTime = null;
+  _inputTTP = null;
 
   componentDidMount = async () => {
     try {
@@ -40,7 +43,13 @@ class App extends Component {
   };
 
   // Function to start a new auction
-  newAuction = async (biddingTime, ttp) => {
+  newAuction = async () => {
+
+    const biddingTime = this._inputBiddingTime.value;
+    const ttp = this._inputTTP.value;
+
+    console.log(biddingTime);
+    console.log(ttp);
 
     const instance = this.state.auctionMakerInstance;
     const accounts = this.state.accounts;
@@ -61,6 +70,9 @@ class App extends Component {
     addresses = await instance.methods.getAuction().call();
     //console.log(addresses);
 
+    const block = await web3.eth.getBlock("latest");
+    const timestamp = block.timestamp;
+
     for (const address of addresses) {
 
       const auction = new web3.eth.Contract(
@@ -73,16 +85,14 @@ class App extends Component {
       const highestBidder = await auction.methods.highestBidder().call();
       const highestBid = await auction.methods.highestBid().call();
       const endTime = await auction.methods.auctionEndTime().call();
-      const block = await web3.eth.getBlock("latest");
-      const timestamp = block.timestamp;
-      console.log(timestamp);
+
       const timeRemaining = endTime - timestamp;
 
       data.push({ address, beneficiary, ttp, highestBid, highestBidder, endTime, timeRemaining });
 
     }
 
-    this.setState({ auctionData: data });
+    this.setState({ auctionData: data, timestamp });
 
   };
 
@@ -99,15 +109,17 @@ class App extends Component {
     return (
       <div className="App">
 
+        <h1>Auctions</h1>
 
+        <h2>Current Timestamp: {this.state.timestamp}</h2>
 
         <div className="form-create-auction">
           <h2>Create Auction</h2>
           <div>
-            Bidding Time <input type="text" ref={x => this.biddingTime = x} defaultValue={60} />
+            Bidding Time <input type="text" ref={x => this._inputBiddingTime = x} defaultValue={60} />
           </div>
           <div>
-            TTP Address <input type="text" ref={x => this.ttp = x} defaultValue={'0x0000000000000000000000000000000000000000'} />
+            TTP Address <input type="text" ref={x => this._inputTTP = x} defaultValue={'0x0000000000000000000000000000000000000000'} />
           </div>
           <button onClick={this.newAuction}>Create Auction</button>
         </div>
