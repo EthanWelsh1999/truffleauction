@@ -10,6 +10,7 @@ class App extends Component {
 
   _inputBiddingTime = null;
   _inputTTP = null;
+  _inputBid = null;
 
   componentDidMount = async () => {
     try {
@@ -56,6 +57,10 @@ class App extends Component {
 
     await instance.methods.createAuction(biddingTime, ttp).send({ from: accounts[0] });
     await this.getAuctions();
+
+  }
+
+  cancelAuction = async(address) => {
 
   }
 
@@ -135,6 +140,7 @@ class App extends Component {
                 <td>Highest Bidder Address</td>
                 <td>End Time</td>
                 <td>Time Remaining</td>
+                <td>Actions</td>
               </tr>
             </thead>
             <tbody>
@@ -148,6 +154,10 @@ class App extends Component {
                     <td>{auction.highestBidder.substr(0, 10)}</td>
                     <td>{auction.endTime}</td>
                     <td>{auction.timeRemaining}</td>
+                    <td>
+                      {auction.beneficiary == this.state.accounts[0] &&
+                      <button onClick={() => this.cancelAuction(auction.address)}>Cancel</button>}
+                    </td>
                   </tr>
                 )
               })}
