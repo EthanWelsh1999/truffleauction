@@ -1,22 +1,51 @@
-.App {
-  text-align: center;
+/* Taken from https://github.com/brynbellomy/solidity-auction*/
+
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800);
+
+html,
+body {
+  height: 100%;
+  width: 100%;
 }
 
-.App-logo {
-  height: 40vmin;
-}
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Open Sans", "Helvetica Neue", "Helvetica";
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  align-items: center;
 }
 
-.App-link {
-  color: #09d3ac;
+
+ul {
+  list-style: none;
+}
+
+
+table,
+thead {
+  width: 100%;
+}
+
+
+
+.form-create-auction {
+  background-color: #d3d3d3;
+  border-radius: 3px;
+  padding: 5px;
+}
+
+.form-create-auction h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+table td {
+  padding: 5px;
+}
+
+table thead {
+  font-weight: bold;
 }

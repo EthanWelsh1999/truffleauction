@@ -116,8 +116,8 @@ class App extends Component {
               {auctions.map(auction => {
                 return (
                   <tr key={auction.address}>
-                    <td>{auction.address}</td>
-                    <td>{auction.beneficiary}</td>
+                    <td>{auction.address.substr(0, 10)}</td>
+                    <td>{auction.beneficiary.substr(0, 10)}</td>
                     <td>{auction.ttp}</td>
                   </tr>
                 )
