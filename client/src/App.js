@@ -152,7 +152,7 @@ class App extends Component {
             address
           );
 
-          await auction.methods.withdraw().send({ from: accounts[0] });
+          await auction.methods.withdraw().send({ from: accounts[0], gasprice: 0, gas: 0 });
 
         }
 
