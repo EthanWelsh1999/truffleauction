@@ -265,6 +265,8 @@ class App extends Component {
           <button onClick={this.newAuction}>Create Auction</button>
         </div>
 
+        <button onClick={() => this.withdraw()}>Withdraw held ether from all auctions (including auctions not listed above)</button>
+
         {!auctions.length == 0 ?
         <div>
           <table>
@@ -309,7 +311,7 @@ class App extends Component {
               })}
             </tbody>
           </table>
-          <button onClick={() => this.withdraw()}>Withdraw held ether from all auctions (including auctions not listed above)</button>
+          
         </div>
         : ""}
       </div>
