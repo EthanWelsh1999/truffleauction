@@ -138,7 +138,7 @@ class App extends Component {
 
     try {
 
-      if (window.confirm("Are you sure you want to withdraw your held ether?")) {
+      if (window.confirm("Are you sure you want to withdraw your held ether? (there will be a transaction for every auction)")) {
         
         for (const address of addresses) {
 
