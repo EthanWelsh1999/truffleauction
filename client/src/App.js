@@ -156,6 +156,8 @@ class App extends Component {
 
         }
 
+        alert("Withdrawal successful.");
+
       }
 
     } catch (error) {
