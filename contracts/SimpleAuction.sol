@@ -46,10 +46,10 @@ contract SimpleAuction {
     // This map will contain all of the parties who have verified the transaction. 2/3 are needed to end the auction
     mapping(address => bool) signed;
     // Counts the number of signatures.
-    uint sigCount;
+    uint public sigCount;
 
     // This variable is set to true when the auction is cancelled
-    bool cancelled;
+    bool public cancelled;
     // This event fires when the auction is cancelled
     event AuctionCancelled();
     // This event fires when the auction is over.
