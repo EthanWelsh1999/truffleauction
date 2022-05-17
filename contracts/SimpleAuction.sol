@@ -40,7 +40,7 @@ contract SimpleAuction {
 
     // Set to true at the end, disallows any change.
     // By default initialized to `false`.
-    bool ended;
+    bool public ended;
 
     // ***MODIFIED HERE***
     // This map will contain all of the parties who have verified the transaction. 2/3 are needed to end the auction

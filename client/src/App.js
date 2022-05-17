@@ -60,8 +60,20 @@ class App extends Component {
 
   }
 
-  cancelAuction = async(address) => {
+  cancelAuction = async (address) => {
 
+  }
+
+  signAuction = async (address) => {
+
+  }
+
+  endAuction = async (address) => {
+
+  }
+
+  bid = async (address) => {
+    
   }
 
   // Updates the data concerning the current auctions
@@ -90,10 +102,16 @@ class App extends Component {
       const highestBidder = await auction.methods.highestBidder().call();
       const highestBid = await auction.methods.highestBid().call();
       const endTime = await auction.methods.auctionEndTime().call();
+      const sigCount = await auction.methods.sigCount().call();
+      const cancelled = await auction.methods.cancelled().call();
+      const ended = await auction.methods.ended().call();
 
       const timeRemaining = endTime - timestamp;
+      const cancelable = (timeRemaining > 0 && cancelled === false);
 
-      data.push({ address, beneficiary, ttp, highestBid, highestBidder, endTime, timeRemaining });
+      if (!cancelled && !ended) {
+        data.push({ address, beneficiary, ttp, highestBid, highestBidder, endTime, timeRemaining, sigCount, cancelable });
+      }
 
     }
 
@@ -140,7 +158,9 @@ class App extends Component {
                 <td>Highest Bidder Address</td>
                 <td>End Time</td>
                 <td>Time Remaining (seconds)</td>
+                {auction.timeRemaining <= 0 ? <td>Signature Count</td> : ""}
                 <td>Actions</td>
+                
               </tr>
             </thead>
             <tbody>
@@ -153,10 +173,20 @@ class App extends Component {
                     <td>{auction.highestBid}</td>
                     <td>{auction.highestBidder.substr(0, 10)}</td>
                     <td>{auction.endTime}</td>
-                    <td>{auction.timeRemaining}</td>
+                    <td>{auction.timeRemaining > 0 ? auction.timeRemaining : "Ended"}</td>
+                    {auction.timeRemaining <= 0 ? <td>{auction.sigCount}</td> : ""}
                     <td>
-                      {auction.beneficiary == this.state.accounts[0] &&
-                      <button onClick={() => this.cancelAuction(auction.address)}>Cancel</button>}
+                      {(auction.beneficiary != this.state.accounts[0]) && (auction.timeRemaining > 0) ? 
+                      <div>Bid Amount: <input type="text" ref={x => this._inputBid = x} defaultValue={0} />
+                      <button onClick={() => this.bid(auction.address)}>Place Bid</button></div> : ""}
+
+                      {(auction.beneficiary == this.state.accounts[0]) && (auction.cancelable) ? 
+                      <button onClick={() => this.cancelAuction(auction.address)}>Cancel</button> : ""}
+
+                      {(((auction.beneficiary == this.state.accounts[0]) || (auction.highestBidder == this.state.accounts[0]) || (auction.ttp == this.accounts[0])) &&
+                      auction.timeRemaining <= 0) ? <button onClick={() => this.signAuction(auction.address)}>Sign Auction</button> : ""}
+
+                      {auction.sigCount >= 2 ? <button onClick={() => this.endAuction(auction.address)}>End Auction</button>: ""}
                     </td>
                   </tr>
                 )
