@@ -60,11 +60,69 @@ class App extends Component {
 
   }
 
+  // Function to cancel the auction
   cancelAuction = async (address) => {
+
+    const instance = this.state.auctionMakerInstance;
+    const web3 = this.state.web3;
+    const accounts = this.state.accounts;
+
+    let addresses = [];
+    addresses = await instance.methods.getAuction().call();
+
+    try {
+
+      if (window.confirm("Are you sure you want to cancel the auction?")) {
+        if (addresses.includes(address)) {
+          const auction = new web3.eth.Contract(
+            AuctionContract.abi,
+            String(address)
+          );
+
+          await auction.methods.cancelAuction().send({from: accounts[0]});
+
+        } else {
+          alert("Auction address was not found among the list of active auctions. Contact the webmaster if this error occurs.");
+        }
+      }
+
+    } catch (error) {
+      alert("Failed to cancel auction. Check console for details");
+      console.error(error);
+    }
 
   }
 
+  // Function to sign the auction once it is done
   signAuction = async (address) => {
+
+    const instance = this.state.auctionMakerInstance;
+    const web3 = this.state.web3;
+    const accounts = this.state.accounts;
+
+    let addresses = [];
+    addresses = await instance.methods.getAuction().call();
+
+    try {
+
+      if (window.confirm("Are you sure you want to sign the auction?")) {
+        if (addresses.includes(address)) {
+          const auction = new web3.eth.Contract(
+            AuctionContract.abi,
+            String(address)
+          );
+
+          await auction.methods.sign().send({from: accounts[0]});
+
+        } else {
+          alert("Auction address was not found among the list of active auctions. Contact the webmaster if this error occurs.");
+        }
+      }
+
+    } catch (error) {
+      alert("Failed to sign auction. Check console for details");
+      console.error(error);
+    }
 
   }
 
@@ -139,7 +197,7 @@ class App extends Component {
       const ended = await auction.methods.ended().call();
 
       const timeRemaining = endTime - timestamp;
-      const cancelable = (timeRemaining > 0 && cancelled === false);
+      const cancelable = (sigCount == 0 && cancelled === false);
 
       if (!cancelled && !ended) {
         data.push({ address, beneficiary, ttp, highestBid, highestBidder, endTime, timeRemaining, sigCount, cancelable });
@@ -226,7 +284,7 @@ class App extends Component {
               })}
             </tbody>
           </table>
-          <button onClick={() => this.withdraw()}>Withdraw from all auctions (including auctions not listed above)</button>
+          <button onClick={() => this.withdraw()}>Withdraw held ether from all auctions (including auctions not listed above)</button>
         </div>
         : ""}
       </div>
