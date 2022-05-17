@@ -126,10 +126,6 @@ class App extends Component {
 
   }
 
-  endAuction = async (address) => {
-
-  }
-
   withdraw = async () => {
 
   }
@@ -277,7 +273,6 @@ class App extends Component {
                       {(((auction.beneficiary == accounts[0]) || (auction.highestBidder == accounts[0]) || (auction.ttp == accounts[0])) &&
                       auction.timeRemaining <= 0) ? <button onClick={() => this.signAuction(auction.address)}>Sign Auction (current signature count: {auction.sigCount})</button> : ""}
 
-                      {auction.sigCount >= 2 ? <button onClick={() => this.endAuction(auction.address)}>End Auction</button>: ""}
                     </td>
                   </tr>
                 )
