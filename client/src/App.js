@@ -126,7 +126,37 @@ class App extends Component {
 
   }
 
+  // Function  to withdraw held ether from all auctions
   withdraw = async () => {
+
+    const instance = this.state.auctionMakerInstance;
+    const web3 = this.state.web3;
+    const accounts = this.state.accounts;
+
+    let addresses = [];
+    addresses = await instance.methods.getAuction().call();
+
+    try {
+
+      if (window.confirm("Are you sure you want to withdraw your held ether?")) {
+        
+        for (const address of addresses) {
+
+          const auction = new web3.eth.Contract(
+            AuctionContract.abi,
+            address
+          );
+
+          await auction.methods.withdraw().send({from: accounts[0]});
+
+        }
+
+      }
+
+    } catch (error) {
+      alert("Failed to withdraw ether. Check console for details");
+      console.error(error);
+    }
 
   }
 
