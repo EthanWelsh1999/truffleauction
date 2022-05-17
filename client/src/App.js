@@ -21,13 +21,13 @@ class App extends Component {
 
       // Use web3 to get the user's accounts.
       const accounts = await web3.eth.getAccounts();
-      //console.log(accounts);
+      console.log(accounts);
 
       const networkId = await web3.eth.net.getId();
       const deployedNetwork = AuctionMakerContract.networks[networkId];
       const instance = new web3.eth.Contract(
         AuctionMakerContract.abi,
-        "0x092d26fda83e4071ce2C7918241127856213df5a"
+        deployedNetwork && deployedNetwork.address
       );
 
       console.log(instance);
@@ -72,8 +72,35 @@ class App extends Component {
 
   }
 
+  // Places a bid on the auction at the specified address
   bid = async (address) => {
-    
+    const bidAmount = this._inputBid;
+    const instance = this.state.auctionMakerInstance;
+    const web3 = this.state.web3;
+    const accounts = this.state.accounts;
+    let addresses = [];
+
+    addresses = await instance.methods.getAuction().call();
+    try {
+
+      if (confirm("By confirming this, you consent to the TTP of the auction being the specified address, and confirm that you trust them to act honestly")) {
+        if (addresses.includes(address)) {
+          const auction = new web3.eth.Contract(
+            AuctionContract.abi,
+            String(address)
+          );
+
+          await auction.methods.bid().send({from: accounts[0], value: bidAmount});
+
+        } else {
+          alert("Auction address was not found among the list of active auctions. Contact the webmaster if this error occurs.");
+        }
+      }
+
+    } catch (error) {
+      alert("Failed to place bid. Check console for details.");
+      console.error(error);
+    }
   }
 
   // Updates the data concerning the current auctions
@@ -127,6 +154,7 @@ class App extends Component {
     this.getAuctions();
 
     const auctions = this.state.auctionData;
+    const accounts = this.state.accounts;
     //console.log(auctions);
 
     return (
@@ -147,6 +175,7 @@ class App extends Component {
           <button onClick={this.newAuction}>Create Auction</button>
         </div>
 
+        {!auctions.length == 0 ?
         <div>
           <table>
             <thead>
@@ -158,7 +187,6 @@ class App extends Component {
                 <td>Highest Bidder Address</td>
                 <td>End Time</td>
                 <td>Time Remaining (seconds)</td>
-                {auction.timeRemaining <= 0 ? <td>Signature Count</td> : ""}
                 <td>Actions</td>
                 
               </tr>
@@ -174,17 +202,16 @@ class App extends Component {
                     <td>{auction.highestBidder.substr(0, 10)}</td>
                     <td>{auction.endTime}</td>
                     <td>{auction.timeRemaining > 0 ? auction.timeRemaining : "Ended"}</td>
-                    {auction.timeRemaining <= 0 ? <td>{auction.sigCount}</td> : ""}
                     <td>
-                      {(auction.beneficiary != this.state.accounts[0]) && (auction.timeRemaining > 0) ? 
+                      {(auction.beneficiary != accounts[0] && auction.ttp != accounts[0]) && (auction.timeRemaining > 0) ? 
                       <div>Bid Amount: <input type="text" ref={x => this._inputBid = x} defaultValue={0} />
                       <button onClick={() => this.bid(auction.address)}>Place Bid</button></div> : ""}
 
-                      {(auction.beneficiary == this.state.accounts[0]) && (auction.cancelable) ? 
+                      {(auction.beneficiary == accounts[0]) && (auction.cancelable) ? 
                       <button onClick={() => this.cancelAuction(auction.address)}>Cancel</button> : ""}
 
-                      {(((auction.beneficiary == this.state.accounts[0]) || (auction.highestBidder == this.state.accounts[0]) || (auction.ttp == this.accounts[0])) &&
-                      auction.timeRemaining <= 0) ? <button onClick={() => this.signAuction(auction.address)}>Sign Auction</button> : ""}
+                      {(((auction.beneficiary == accounts[0]) || (auction.highestBidder == accounts[0]) || (auction.ttp == accounts[0])) &&
+                      auction.timeRemaining <= 0) ? <button onClick={() => this.signAuction(auction.address)}>Sign Auction (current signature count: {auction.sigCount})</button> : ""}
 
                       {auction.sigCount >= 2 ? <button onClick={() => this.endAuction(auction.address)}>End Auction</button>: ""}
                     </td>
@@ -194,6 +221,7 @@ class App extends Component {
             </tbody>
           </table>
         </div>
+        : ""}
       </div>
     );
   }
