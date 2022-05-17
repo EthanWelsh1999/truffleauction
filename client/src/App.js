@@ -40,7 +40,7 @@ class App extends Component {
         `Failed to load web3, accounts, or contract. Check console for details.`,
       );
       console.error(error);
-    }
+    };
   };
 
   // Function to start a new auction
@@ -55,8 +55,13 @@ class App extends Component {
     const instance = this.state.auctionMakerInstance;
     const accounts = this.state.accounts;
 
-    await instance.methods.createAuction(biddingTime, ttp, accounts[0]).send({ from: accounts[0] });
-    await this.getAuctions();
+    try {
+      await instance.methods.createAuction(biddingTime, ttp, accounts[0]).send({ from: accounts[0] });
+      await this.getAuctions();
+    } catch (error) {
+      alert("Failed to create auction. Check console for errors");
+      console.error(error);
+    };
 
   }
 
@@ -79,7 +84,7 @@ class App extends Component {
             String(address)
           );
 
-          await auction.methods.cancelAuction().send({from: accounts[0]});
+          await auction.methods.cancelAuction().send({ from: accounts[0] });
 
         } else {
           alert("Auction address was not found among the list of active auctions. Contact the webmaster if this error occurs.");
@@ -89,7 +94,7 @@ class App extends Component {
     } catch (error) {
       alert("Failed to cancel auction. Check console for details");
       console.error(error);
-    }
+    };
 
   }
 
@@ -112,7 +117,7 @@ class App extends Component {
             String(address)
           );
 
-          await auction.methods.sign().send({from: accounts[0]});
+          await auction.methods.sign().send({ from: accounts[0] });
 
         } else {
           alert("Auction address was not found among the list of active auctions. Contact the webmaster if this error occurs.");
@@ -122,7 +127,7 @@ class App extends Component {
     } catch (error) {
       alert("Failed to sign auction. Check console for details");
       console.error(error);
-    }
+    };
 
   }
 
@@ -139,7 +144,7 @@ class App extends Component {
     try {
 
       if (window.confirm("Are you sure you want to withdraw your held ether? (there will be a transaction for every auction)")) {
-        
+
         for (const address of addresses) {
 
           const auction = new web3.eth.Contract(
@@ -147,7 +152,7 @@ class App extends Component {
             address
           );
 
-          await auction.methods.withdraw().send({from: accounts[0]});
+          await auction.methods.withdraw().send({ from: accounts[0] });
 
         }
 
@@ -156,7 +161,7 @@ class App extends Component {
     } catch (error) {
       alert("Failed to withdraw ether. Check console for details");
       console.error(error);
-    }
+    };
 
   }
 
@@ -179,7 +184,7 @@ class App extends Component {
             String(address)
           );
 
-          await auction.methods.bid().send({from: accounts[0], value: weiValue});
+          await auction.methods.bid().send({ from: accounts[0], value: weiValue });
 
         } else {
           alert("Auction address was not found among the list of active auctions. Contact the webmaster if this error occurs.");
@@ -189,7 +194,7 @@ class App extends Component {
     } catch (error) {
       alert("Failed to place bid. Check console for details.");
       console.error(error);
-    }
+    };
   }
 
   // Updates the data concerning the current auctions
@@ -229,7 +234,7 @@ class App extends Component {
         data.push({ address, beneficiary, ttp, highestBid, highestBidder, endTime, timeRemaining, sigCount, cancelable });
       }
 
-    }
+    };
 
     this.setState({ auctionData: data, timestamp });
 
@@ -268,52 +273,52 @@ class App extends Component {
         <button onClick={() => this.withdraw()}>Withdraw held ether from all auctions (including auctions not listed above)</button>
 
         {!auctions.length == 0 ?
-        <div>
-          <table>
-            <thead>
-              <tr>
-                <td>Address</td>
-                <td>Beneficiary Address</td>
-                <td>TTP Address</td>
-                <td>Highest Bid (Ether)</td>
-                <td>Highest Bidder Address</td>
-                <td>End Time</td>
-                <td>Time Remaining (seconds)</td>
-                <td>Actions</td>
-                
-              </tr>
-            </thead>
-            <tbody>
-              {auctions.map(auction => {
-                return (
-                  <tr key={auction.address}>
-                    <td>{auction.address.substr(0, 10)}</td>
-                    <td>{auction.beneficiary.substr(0, 10)}</td>
-                    <td>{auction.ttp}</td>
-                    <td>{web3.utils.fromWei(auction.highestBid, "ether")}</td>
-                    <td>{auction.highestBidder.substr(0, 10)}</td>
-                    <td>{auction.endTime}</td>
-                    <td>{auction.timeRemaining > 0 ? auction.timeRemaining : "Ended"}</td>
-                    <td>
-                      {(auction.beneficiary != accounts[0] && auction.ttp != accounts[0]) && (auction.timeRemaining > 0) ? 
-                      <div>Bid Amount (Ether): <input type="text" ref={x => this._inputBid = x} defaultValue={0} />
-                      <button onClick={() => this.bid(auction.address)}>Place Bid</button></div> : ""}
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <td>Address</td>
+                  <td>Beneficiary Address</td>
+                  <td>TTP Address</td>
+                  <td>Highest Bid (Ether)</td>
+                  <td>Highest Bidder Address</td>
+                  <td>End Time</td>
+                  <td>Time Remaining (seconds)</td>
+                  <td>Actions</td>
 
-                      {(auction.beneficiary == accounts[0]) && (auction.cancelable) ? 
-                      <button onClick={() => this.cancelAuction(auction.address)}>Cancel</button> : ""}
+                </tr>
+              </thead>
+              <tbody>
+                {auctions.map(auction => {
+                  return (
+                    <tr key={auction.address}>
+                      <td>{auction.address.substr(0, 10)}</td>
+                      <td>{auction.beneficiary.substr(0, 10)}</td>
+                      <td>{auction.ttp}</td>
+                      <td>{web3.utils.fromWei(auction.highestBid, "ether")}</td>
+                      <td>{auction.highestBidder.substr(0, 10)}</td>
+                      <td>{auction.endTime}</td>
+                      <td>{auction.timeRemaining > 0 ? auction.timeRemaining : "Ended"}</td>
+                      <td>
+                        {(auction.beneficiary != accounts[0] && auction.ttp != accounts[0]) && (auction.timeRemaining > 0) ?
+                          <div>Bid Amount (Ether): <input type="text" ref={x => this._inputBid = x} defaultValue={0} />
+                            <button onClick={() => this.bid(auction.address)}>Place Bid</button></div> : ""}
 
-                      {(((auction.beneficiary == accounts[0]) || (auction.highestBidder == accounts[0]) || (auction.ttp == accounts[0])) &&
-                      auction.timeRemaining <= 0) ? <button onClick={() => this.signAuction(auction.address)}>Sign Auction (current signature count: {auction.sigCount})</button> : ""}
+                        {(auction.beneficiary == accounts[0]) && (auction.cancelable) ?
+                          <button onClick={() => this.cancelAuction(auction.address)}>Cancel</button> : ""}
 
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-          
-        </div>
-        : ""}
+                        {(((auction.beneficiary == accounts[0]) || (auction.highestBidder == accounts[0]) || (auction.ttp == accounts[0])) &&
+                          auction.timeRemaining <= 0) ? <button onClick={() => this.signAuction(auction.address)}>Sign Auction (current signature count: {auction.sigCount})</button> : ""}
+
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+
+          </div>
+          : ""}
       </div>
     );
   }
