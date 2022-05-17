@@ -15,7 +15,7 @@ contract AuctionMaker {
     event AuctionCreated(address auction, address beneficiary, address ttp, uint biddingTime);
 
     // Function to create a new auction with the assigned bidding time
-    function createAuction(uint biddingTime, address ttp, address seller) public {
+    function createAuction(uint biddingTime, address ttp, address payable seller) public {
         address payable beneficiary = seller;
         SimpleAuction auction = new SimpleAuction(biddingTime, ttp, beneficiary);
 
