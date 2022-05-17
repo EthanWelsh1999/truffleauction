@@ -126,7 +126,7 @@ class App extends Component {
 
   }
 
-  // Function  to withdraw held ether from all auctions
+  // Function to withdraw held ether from all auctions
   withdraw = async () => {
 
     const instance = this.state.auctionMakerInstance;
