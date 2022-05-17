@@ -17,11 +17,11 @@ class App extends Component {
       // Get network provider and web3 instance.
       const web3 = await getWeb3();
 
-      console.log(web3.givenProvider);
+      //console.log(web3.givenProvider);
 
       // Use web3 to get the user's accounts.
       const accounts = await web3.eth.getAccounts();
-      console.log(accounts);
+      //console.log(accounts);
 
       const networkId = await web3.eth.net.getId();
       const deployedNetwork = AuctionMakerContract.networks[networkId];
@@ -30,7 +30,7 @@ class App extends Component {
         deployedNetwork && deployedNetwork.address
       );
 
-      console.log(instance);
+      //console.log(instance);
 
       // Set web3 and accounts to the state, and call example
       this.setState({ web3, accounts, auctionMakerInstance: instance });
