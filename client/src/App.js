@@ -55,7 +55,7 @@ class App extends Component {
     const instance = this.state.auctionMakerInstance;
     const accounts = this.state.accounts;
 
-    await instance.methods.createAuction(biddingTime, ttp).send({ from: accounts[0] });
+    await instance.methods.createAuction(biddingTime, ttp, accounts[0]).send({ from: accounts[0] });
     await this.getAuctions();
 
   }
@@ -116,7 +116,7 @@ class App extends Component {
 
         <h1>Auctions</h1>
 
-        <h2>Current Timestamp: {this.state.timestamp}</h2>
+        <h2>Current Block Timestamp: {this.state.timestamp}</h2>
 
         <div className="form-create-auction">
           <h2>Create Auction</h2>
@@ -139,7 +139,7 @@ class App extends Component {
                 <td>Highest Bid</td>
                 <td>Highest Bidder Address</td>
                 <td>End Time</td>
-                <td>Time Remaining</td>
+                <td>Time Remaining (seconds)</td>
                 <td>Actions</td>
               </tr>
             </thead>

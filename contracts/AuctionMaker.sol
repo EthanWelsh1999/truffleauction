@@ -15,13 +15,13 @@ contract AuctionMaker {
     event AuctionCreated(address auction, address beneficiary, address ttp, uint biddingTime);
 
     // Function to create a new auction with the assigned bidding time
-    function createAuction(uint biddingTime, address ttp) public {
-        address payable beneficiary = msg.sender;
+    function createAuction(uint biddingTime, address ttp, address seller) public {
+        address payable beneficiary = seller;
         SimpleAuction auction = new SimpleAuction(biddingTime, ttp, beneficiary);
 
         auctions.push(address(auction));
 
-        emit AuctionCreated(address(auction), msg.sender, ttp, biddingTime);
+        emit AuctionCreated(address(auction), seller, ttp, biddingTime);
     }
 
     // Function to get the list of auctions
