@@ -72,25 +72,30 @@ class App extends Component {
 
   }
 
+  withdraw = async () => {
+
+  }
+
   // Places a bid on the auction at the specified address
   bid = async (address) => {
-    const bidAmount = this._inputBid;
+    const bidAmount = this._inputBid.value;
     const instance = this.state.auctionMakerInstance;
     const web3 = this.state.web3;
+    const weiValue = web3.utils.toWei(bidAmount, "ether");
     const accounts = this.state.accounts;
     let addresses = [];
 
     addresses = await instance.methods.getAuction().call();
     try {
 
-      if (confirm("By confirming this, you consent to the TTP of the auction being the specified address, and confirm that you trust them to act honestly")) {
+      if (window.confirm("By confirming this, you consent to the TTP of the auction being the specified address, and confirm that you trust them to act honestly") == true) {
         if (addresses.includes(address)) {
           const auction = new web3.eth.Contract(
             AuctionContract.abi,
             String(address)
           );
 
-          await auction.methods.bid().send({from: accounts[0], value: bidAmount});
+          await auction.methods.bid().send({from: accounts[0], value: weiValue});
 
         } else {
           alert("Auction address was not found among the list of active auctions. Contact the webmaster if this error occurs.");
@@ -155,6 +160,7 @@ class App extends Component {
 
     const auctions = this.state.auctionData;
     const accounts = this.state.accounts;
+    const web3 = this.state.web3;
     //console.log(auctions);
 
     return (
@@ -183,7 +189,7 @@ class App extends Component {
                 <td>Address</td>
                 <td>Beneficiary Address</td>
                 <td>TTP Address</td>
-                <td>Highest Bid</td>
+                <td>Highest Bid (Ether)</td>
                 <td>Highest Bidder Address</td>
                 <td>End Time</td>
                 <td>Time Remaining (seconds)</td>
@@ -198,13 +204,13 @@ class App extends Component {
                     <td>{auction.address.substr(0, 10)}</td>
                     <td>{auction.beneficiary.substr(0, 10)}</td>
                     <td>{auction.ttp}</td>
-                    <td>{auction.highestBid}</td>
+                    <td>{web3.utils.fromWei(auction.highestBid, "ether")}</td>
                     <td>{auction.highestBidder.substr(0, 10)}</td>
                     <td>{auction.endTime}</td>
                     <td>{auction.timeRemaining > 0 ? auction.timeRemaining : "Ended"}</td>
                     <td>
                       {(auction.beneficiary != accounts[0] && auction.ttp != accounts[0]) && (auction.timeRemaining > 0) ? 
-                      <div>Bid Amount: <input type="text" ref={x => this._inputBid = x} defaultValue={0} />
+                      <div>Bid Amount (Ether): <input type="text" ref={x => this._inputBid = x} defaultValue={0} />
                       <button onClick={() => this.bid(auction.address)}>Place Bid</button></div> : ""}
 
                       {(auction.beneficiary == accounts[0]) && (auction.cancelable) ? 
@@ -220,6 +226,7 @@ class App extends Component {
               })}
             </tbody>
           </table>
+          <button onClick={() => this.withdraw()}>Withdraw from all auctions (including auctions not listed above)</button>
         </div>
         : ""}
       </div>
